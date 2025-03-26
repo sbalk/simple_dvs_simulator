@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-DVS Camera Simulator
+"""DVS Camera Simulator.
 
 This script simulates a Dynamic Vision Sensor (DVS) camera by:
 1. Reading a video file
@@ -13,30 +11,39 @@ This script simulates a Dynamic Vision Sensor (DVS) camera by:
 5. Saving the result to a video file
 """
 
-import cv2
-import numpy as np
+from __future__ import annotations
+
 import os
 from pathlib import Path
+
+import cv2
+import numpy as np
 
 # Constants
 GREY_VALUE = 128  # Middle grey (8-bit)
 INPUT_DIR = Path("output")
-OUUTPUTS_DIR = Path("input")
+OUTPUT_DIR = Path("input")
+INPUT_VIDEO = Path("input/sample.mp4")
+OUTPUT_VIDEO = Path("output/dvs_sample.mp4")
 
 
 class DVSSimulator:
-    """
-    A class to simulate a Dynamic Vision Sensor (DVS) camera.
-    """
+    """A class to simulate a Dynamic Vision Sensor (DVS) camera."""
 
-    def __init__(self, input_path, output_path, grey_value=128):
-        """
-        Initialize the DVS simulator.
+    def __init__(
+        self,
+        input_path: str | Path,
+        output_path: str | Path,
+        grey_value: int = 128,
+    ) -> None:
+        """Initialize the DVS simulator.
 
         Args:
+        ----
             input_path: Path to the input video file
             output_path: Path to save the output video
             grey_value: Base gray value for the output (default 128)
+
         """
         self.input_path = Path(input_path)
         self.output_path = Path(output_path)
@@ -45,12 +52,19 @@ class DVSSimulator:
         # Ensure output directory exists
         os.makedirs(self.output_path.parent, exist_ok=True)
 
-    def process(self):
-        """Process the video to create a DVS simulation."""
+    def process(self) -> Path:
+        """Process the video to create a DVS simulation.
+
+        Returns
+        -------
+            Path to the output video file
+
+        """
         # Open the video file
         cap = cv2.VideoCapture(str(self.input_path))
         if not cap.isOpened():
-            raise FileNotFoundError(f"Could not open video file {self.input_path}")
+            error_msg = f"Could not open video file {self.input_path}"
+            raise FileNotFoundError(error_msg)
 
         # Get video properties
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -61,13 +75,18 @@ class DVSSimulator:
         # Create video writer
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(
-            str(self.output_path), fourcc, fps, (width, height), isColor=False
+            str(self.output_path),
+            fourcc,
+            fps,
+            (width, height),
+            isColor=False,
         )
 
         # Read the first frame
         ret, prev_frame = cap.read()
         if not ret:
-            raise RuntimeError("Could not read first frame from video")
+            error_msg = "Could not read first frame from video"
+            raise RuntimeError(error_msg)
 
         # Convert first frame to grayscale
         prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
@@ -111,7 +130,7 @@ class DVSSimulator:
             frame_count += 1
             if frame_count % 50 == 0 or frame_count == total_frames:
                 print(
-                    f"Processed {frame_count}/{total_frames} frames ({frame_count/total_frames*100:.1f}%)"
+                    f"Processed {frame_count}/{total_frames} frames ({frame_count/total_frames*100:.1f}%)",
                 )
 
             # Display the frame (optional)
@@ -130,10 +149,12 @@ class DVSSimulator:
         return self.output_path
 
 
-def main():
+def main() -> None:
     """Main function to run the DVS camera simulator."""
     simulator = DVSSimulator(
-        input_path=INPUT_VIDEO, output_path=OUTPUT_VIDEO, grey_value=GREY_VALUE
+        input_path=INPUT_VIDEO,
+        output_path=OUTPUT_VIDEO,
+        grey_value=GREY_VALUE,
     )
     simulator.process()
 

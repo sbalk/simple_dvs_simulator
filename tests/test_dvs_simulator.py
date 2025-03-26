@@ -1,11 +1,15 @@
-import pytest
-import cv2
-import numpy as np
-from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
-import tempfile
+"""Test module for the DVS simulator functionality."""
+
 import shutil
 import sys
+import tempfile
+from pathlib import Path
+from typing import Generator
+from unittest.mock import MagicMock, patch
+
+import cv2
+import numpy as np
+import pytest
 
 # Add the parent directory to the Python path to allow importing modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,27 +18,55 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import main
 from dvs_simulator import DVSSimulator
 
+# Constants for tests to avoid magic values
+TEST_GREY_VALUE = 128
+TEST_FRAME_WIDTH = 64
+TEST_FRAME_HEIGHT = 48
+TEST_FRAME_COUNT = 150
+
 
 class TestDVSSimulator:
-    @pytest.fixture
-    def temp_dir(self):
-        """Create a temporary directory for testing"""
+    """Test class for the DVS simulator functionality."""
+
+    @pytest.fixture()
+    def temp_dir(self) -> Generator[Path, None, None]:
+        """Create a temporary directory for testing.
+
+        Returns
+        -------
+            Generator yielding a temporary directory path
+
+        """
         temp_dir = tempfile.mkdtemp()
         yield Path(temp_dir)
         shutil.rmtree(temp_dir)
 
-    @pytest.fixture
-    def mock_video(self, temp_dir):
-        """Create a small test video file"""
+    @pytest.fixture()
+    def mock_video(self, temp_dir: Path) -> Path:
+        """Create a small test video file.
+
+        Args:
+        ----
+            temp_dir: Temporary directory to create the video in
+
+        Returns:
+        -------
+            Path to the created test video
+
+        """
         # Create a small video file for testing
         video_path = temp_dir / "test_video.mp4"
         # Create a simple 10-frame grayscale video
-        width, height = 64, 48
+        width, height = TEST_FRAME_WIDTH, TEST_FRAME_HEIGHT
         fps = 30
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(
-            str(video_path), fourcc, fps, (width, height), isColor=False
+            str(video_path),
+            fourcc,
+            fps,
+            (width, height),
+            isColor=False,
         )
 
         for i in range(10):
@@ -44,10 +76,16 @@ class TestDVSSimulator:
 
         out.release()
 
-        yield video_path
+        return video_path
 
-    def test_ensure_directory(self, temp_dir):
-        """Test that ensure_directory creates directories when they don't exist"""
+    def test_ensure_directory(self, temp_dir: Path) -> None:
+        """Test that ensure_directory creates directories when they don't exist.
+
+        Args:
+        ----
+            temp_dir: Temporary directory for testing
+
+        """
         test_dir = temp_dir / "test_dir"
         assert not test_dir.exists()
 
@@ -61,8 +99,21 @@ class TestDVSSimulator:
 
     @patch("cv2.VideoCapture")
     @patch("cv2.VideoWriter")
-    def test_process_video(self, mock_writer, mock_capture, temp_dir):
-        """Test the process_video function with mocks"""
+    def test_process_video(
+        self,
+        mock_writer: MagicMock,
+        mock_capture: MagicMock,
+        temp_dir: Path,
+    ) -> None:
+        """Test the process_video function with mocks.
+
+        Args:
+        ----
+            mock_writer: Mock for VideoWriter
+            mock_capture: Mock for VideoCapture
+            temp_dir: Temporary directory for testing
+
+        """
         input_path = temp_dir / "test_input.mp4"
         output_path = temp_dir / "test_output.mp4"
 
@@ -79,7 +130,7 @@ class TestDVSSimulator:
 
         # Mock reading frames
         frame1 = np.ones((480, 640, 3), dtype=np.uint8) * 100
-        frame2 = np.ones((480, 640, 3), dtype=np.uint8) * 150
+        frame2 = np.ones((480, 640, 3), dtype=np.uint8) * TEST_FRAME_COUNT
 
         # Return True, frame1 for first call, then True, frame2, then False, None
         mock_capture_instance.read.side_effect = [
@@ -95,20 +146,24 @@ class TestDVSSimulator:
         assert result is True
         mock_capture.assert_called_once_with(str(input_path))
         mock_writer.assert_called_once()
-        assert (
-            mock_writer().write.call_count == 1
-        )  # Only one frame difference is written
+        assert mock_writer().write.call_count == 1  # Only one frame difference is written
 
-    def test_dvs_simulator_init(self, temp_dir):
-        """Test DVSSimulator initialization"""
+    def test_dvs_simulator_init(self, temp_dir: Path) -> None:
+        """Test DVSSimulator initialization.
+
+        Args:
+        ----
+            temp_dir: Temporary directory for testing
+
+        """
         input_path = temp_dir / "input.mp4"
         output_path = temp_dir / "output.mp4"
 
-        simulator = DVSSimulator(input_path, output_path, grey_value=150)
+        simulator = DVSSimulator(input_path, output_path, grey_value=TEST_FRAME_COUNT)
 
         assert simulator.input_path == input_path
         assert simulator.output_path == output_path
-        assert simulator.grey_value == 150
+        assert simulator.grey_value == TEST_FRAME_COUNT
 
         # Check that output directory was created
         assert output_path.parent.exists()
@@ -119,9 +174,26 @@ class TestDVSSimulator:
     @patch("cv2.waitKey")
     @patch("cv2.destroyAllWindows")
     def test_dvs_simulator_process(
-        self, mock_destroy, mock_wait, mock_show, mock_writer, mock_capture, temp_dir
-    ):
-        """Test the DVSSimulator process method"""
+        self,
+        mock_destroy: MagicMock,  # noqa: ARG002
+        mock_wait: MagicMock,  # noqa: ARG002
+        mock_show: MagicMock,  # noqa: ARG002
+        mock_writer: MagicMock,
+        mock_capture: MagicMock,
+        temp_dir: Path,
+    ) -> None:
+        """Test the DVSSimulator process method.
+
+        Args:
+        ----
+            mock_destroy: Mock for destroyAllWindows (unused)
+            mock_wait: Mock for waitKey (unused)
+            mock_show: Mock for imshow (unused)
+            mock_writer: Mock for VideoWriter
+            mock_capture: Mock for VideoCapture
+            temp_dir: Temporary directory for testing
+
+        """
         input_path = temp_dir / "test_input.mp4"
         output_path = temp_dir / "test_output.mp4"
 
@@ -138,7 +210,7 @@ class TestDVSSimulator:
 
         # Mock reading frames
         frame1 = np.ones((480, 640, 3), dtype=np.uint8) * 100
-        frame2 = np.ones((480, 640, 3), dtype=np.uint8) * 150
+        frame2 = np.ones((480, 640, 3), dtype=np.uint8) * TEST_FRAME_COUNT
 
         # Return True, frame1 for first call, then True, frame2, then False, None
         mock_capture_instance.read.side_effect = [
@@ -156,24 +228,33 @@ class TestDVSSimulator:
         # Verify mock calls
         mock_capture.assert_called_once_with(str(input_path))
         mock_writer.assert_called_once()
-        assert (
-            mock_writer().write.call_count == 1
-        )  # Only one frame difference is written
+        assert mock_writer().write.call_count == 1  # Only one frame difference is written
 
     @patch("argparse.ArgumentParser.parse_args")
     @patch("main.process_video")
     @patch("main.process_all_videos")
     def test_main_function_single_video(
-        self, mock_process_all, mock_process_video, mock_args
-    ):
-        """Test the main function with a single video argument"""
+        self,
+        mock_process_all: MagicMock,
+        mock_process_video: MagicMock,
+        mock_args: MagicMock,
+    ) -> None:
+        """Test the main function with a single video argument.
+
+        Args:
+        ----
+            mock_process_all: Mock for process_all_videos
+            mock_process_video: Mock for process_video
+            mock_args: Mock for parse_args
+
+        """
         # Mock arguments for processing a single video
         args = MagicMock()
         args.input_dir = "input"
         args.output_dir = "output"
         args.input_video = "test.mp4"
         args.output_video = None
-        args.grey_value = 128
+        args.grey_value = TEST_GREY_VALUE
         args.no_display = True
         mock_args.return_value = args
 
@@ -196,16 +277,27 @@ class TestDVSSimulator:
     @patch("main.process_video")
     @patch("main.process_all_videos")
     def test_main_function_all_videos(
-        self, mock_process_all, mock_process_video, mock_args
-    ):
-        """Test the main function with processing all videos"""
+        self,
+        mock_process_all: MagicMock,
+        mock_process_video: MagicMock,
+        mock_args: MagicMock,
+    ) -> None:
+        """Test the main function with processing all videos.
+
+        Args:
+        ----
+            mock_process_all: Mock for process_all_videos
+            mock_process_video: Mock for process_video
+            mock_args: Mock for parse_args
+
+        """
         # Mock arguments for processing all videos
         args = MagicMock()
         args.input_dir = "input"
         args.output_dir = "output"
         args.input_video = None
         args.output_video = None
-        args.grey_value = 128
+        args.grey_value = TEST_GREY_VALUE
         args.no_display = False
         mock_args.return_value = args
 
@@ -216,14 +308,25 @@ class TestDVSSimulator:
         mock_process_all.assert_called_once()
         assert mock_process_all.call_args[0][0] == Path("input")
         assert mock_process_all.call_args[0][1] == Path("output")
-        assert mock_process_all.call_args[0][2] == 128
+        assert mock_process_all.call_args[0][2] == TEST_GREY_VALUE
         assert mock_process_all.call_args[0][3] is True  # display should be True
 
         # Verify process_video was not called
         mock_process_video.assert_not_called()
 
-    def test_integration_with_real_video(self, mock_video, temp_dir):
-        """Integration test with a real (small) video file"""
+    def test_integration_with_real_video(
+        self,
+        mock_video: Path,
+        temp_dir: Path,
+    ) -> None:
+        """Integration test with a real (small) video file.
+
+        Args:
+        ----
+            mock_video: Path to mock video file
+            temp_dir: Temporary directory for testing
+
+        """
         output_path = temp_dir / "dvs_output.mp4"
 
         # Process the video
@@ -239,8 +342,8 @@ class TestDVSSimulator:
             assert cap.isOpened()
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            assert width == 64
-            assert height == 48
+            assert width == TEST_FRAME_WIDTH
+            assert height == TEST_FRAME_HEIGHT
 
             # Should have one fewer frame than input (9 instead of 10)
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -248,8 +351,15 @@ class TestDVSSimulator:
         finally:
             cap.release()
 
-    def test_process_all_videos(self, temp_dir, mock_video):
-        """Test processing all videos in a directory"""
+    def test_process_all_videos(self, temp_dir: Path, mock_video: Path) -> None:
+        """Test processing all videos in a directory.
+
+        Args:
+        ----
+            temp_dir: Temporary directory for testing
+            mock_video: Path to mock video file
+
+        """
         input_dir = temp_dir / "input"
         output_dir = temp_dir / "output"
 
@@ -261,13 +371,17 @@ class TestDVSSimulator:
         shutil.copy(mock_video, input_dir / "video1.mp4")
 
         # Create another test video
-        width, height = 64, 48
+        width, height = TEST_FRAME_WIDTH, TEST_FRAME_HEIGHT
         fps = 30
         video2_path = input_dir / "video2.mp4"
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(
-            str(video2_path), fourcc, fps, (width, height), isColor=False
+            str(video2_path),
+            fourcc,
+            fps,
+            (width, height),
+            isColor=False,
         )
 
         for i in range(5):

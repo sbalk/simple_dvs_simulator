@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-DVS Camera Simulator
+"""DVS Camera Simulator.
 
 This script simulates a Dynamic Vision Sensor (DVS) camera by:
 1. Reading a video file
@@ -13,11 +12,14 @@ This script simulates a Dynamic Vision Sensor (DVS) camera by:
 5. Saving the result to a video file
 """
 
+from __future__ import annotations
+
+import argparse
+import os
+from pathlib import Path
+
 import cv2
 import numpy as np
-import os
-import argparse
-from pathlib import Path
 
 # Constants
 GREY_VALUE = 128  # Middle grey (8-bit)
@@ -25,20 +27,30 @@ DEFAULT_INPUT_DIR = Path("input")
 DEFAULT_OUTPUT_DIR = Path("output")
 
 
-def ensure_directory(directory):
+def ensure_directory(directory: str | Path) -> None:
     """Ensure the directory exists."""
     os.makedirs(directory, exist_ok=True)
 
 
-def process_video(input_path, output_path, grey_value=GREY_VALUE, display=False):
-    """
-    Process the video to simulate DVS camera output.
+def process_video(
+    input_path: str | Path,
+    output_path: str | Path,
+    grey_value: int = GREY_VALUE,
+    display: bool = False,
+) -> bool:
+    """Process the video to simulate DVS camera output.
 
     Args:
+    ----
         input_path: Path to the input video file
         output_path: Path to save the output video
         grey_value: Base gray value for the output (default 128)
         display: Whether to display frames during processing
+
+    Returns:
+    -------
+        bool: True if processing completed successfully
+
     """
     # Open the video file
     cap = cv2.VideoCapture(str(input_path))
@@ -104,7 +116,7 @@ def process_video(input_path, output_path, grey_value=GREY_VALUE, display=False)
         frame_count += 1
         if frame_count % 50 == 0 or frame_count == total_frames:
             print(
-                f"Processed {frame_count}/{total_frames} frames ({frame_count/total_frames*100:.1f}%)"
+                f"Processed {frame_count}/{total_frames} frames ({frame_count/total_frames*100:.1f}%)",
             )
 
         # Display the frame
@@ -125,15 +137,21 @@ def process_video(input_path, output_path, grey_value=GREY_VALUE, display=False)
     return True
 
 
-def process_all_videos(input_dir, output_dir, grey_value=GREY_VALUE, display=False):
-    """
-    Process all video files in the input directory, except those already converted.
+def process_all_videos(
+    input_dir: str | Path,
+    output_dir: str | Path,
+    grey_value: int = GREY_VALUE,
+    display: bool = False,
+) -> None:
+    """Process all video files in the input directory, except those already converted.
 
     Args:
+    ----
         input_dir: Directory containing input videos
         output_dir: Directory to save output videos
         grey_value: Base gray value for the output
         display: Whether to display frames during processing
+
     """
     # Ensure output directory exists
     ensure_directory(output_dir)
@@ -143,41 +161,44 @@ def process_all_videos(input_dir, output_dir, grey_value=GREY_VALUE, display=Fal
     video_files = []
 
     for ext in video_extensions:
-        video_files.extend(list(input_dir.glob(f"*{ext}")))
+        video_files.extend(list(Path(input_dir).glob(f"*{ext}")))
 
     if not video_files:
         print(f"No video files found in {input_dir}")
         return
 
     # Get list of already processed videos (based on filenames)
-    processed_videos = set()
-    for output_file in output_dir.glob("dvs_*.mp4"):
+    processed_videos: set[str] = set()
+    for output_file in Path(output_dir).glob("dvs_*.mp4"):
         # Extract the original filename from the output filename (remove 'dvs_' prefix)
         original_name = output_file.stem[4:]  # Skip the 'dvs_' prefix
         processed_videos.add(original_name)
 
     # Filter out already processed videos
-    videos_to_process = []
-    for video_file in video_files:
-        if video_file.stem not in processed_videos:
-            videos_to_process.append(video_file)
+    videos_to_process = [video_file for video_file in video_files if video_file.stem not in processed_videos]
 
     if not videos_to_process:
         print("All videos have already been processed.")
         return
 
     print(
-        f"Found {len(videos_to_process)} videos to process out of {len(video_files)} total videos."
+        f"Found {len(videos_to_process)} videos to process out of {len(video_files)} total videos.",
     )
 
     # Process each video
     for video_file in videos_to_process:
-        output_file = output_dir / f"dvs_{video_file.stem}.mp4"
+        output_file = Path(output_dir) / f"dvs_{video_file.stem}.mp4"
         process_video(video_file, output_file, grey_value, display)
 
 
-def parse_arguments():
-    """Parse command line arguments."""
+def parse_arguments() -> argparse.Namespace:
+    """Parse command line arguments.
+
+    Returns
+    -------
+        argparse.Namespace: The parsed arguments
+
+    """
     parser = argparse.ArgumentParser(description="DVS Camera Simulator")
 
     # Add arguments
@@ -220,7 +241,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """Main function to run the DVS camera simulator."""
     args = parse_arguments()
 
