@@ -2,10 +2,83 @@
 name = "simple-dvs-emulator"
 version = "0.1.0"
 description = "A simple DVS camera simulator using OpenCV"
-readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = [
     "opencv-python",
     "numpy",
-    "uv"
+    "uv",
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/basnijholt/clip-files"
+
+[project.optional-dependencies]
+test = ["pytest", "pre-commit", "coverage", "pytest-cov"]
+docs = []
+
+[tool.pytest.ini_options]
+addopts = """
+    --cov-report term
+    --cov-report html
+    --cov-report xml
+    --cov-fail-under=70
+"""
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+[tool.ruff]
+line-length = 150
+target-version = "py37"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "T20",     # flake8-print
+    "ANN101",  # Missing type annotation for {name} in method
+    "S101",    # Use of assert detected
+    "PD901",   # df is a bad variable name. Be kinder to your future self.
+    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in {name}
+    "D402",    # First line should not be the function's signature
+    "PLW0603", # Using the global statement to update `X` is discouraged
+    "D401",    # First line of docstring should be in imperative mood
+    "SLF001",  # Private member accessed
+    "PTH",     # Use pathlib.Path
+    "DTZ005",  # The use of `datetime.datetime.now()` without `tz` argument is not allowed
+    "PLR0913", # Too many arguments to function call
+    "S602",    # `subprocess` call with `shell=True` identified, security issue
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["SLF001"]
+".github/*" = ["INP001"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 18
+
+[tool.mypy]
+python_version = "3.7"
+
+[tool.versioningit]
+
+[tool.versioningit.vcs]
+method = "git"
+match = ["v*"]
+default-tag = "0.0.0"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.6.1",
+    "pre-commit>=3.5.0",
+    "pytest>=8.3.5",
+    "pytest-cov>=5.0.0",
 ]

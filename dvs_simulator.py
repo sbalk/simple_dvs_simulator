@@ -89,7 +89,7 @@ class DVSSimulator:
             curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
             # Calculate the difference between frames
-            diff = cv2.subtract(curr_gray, prev_gray)
+            diff = cv2.subtract(prev_gray, curr_gray)
 
             # Create the DVS visualization
             # Start with a uniform grey frame

@@ -1,75 +1,98 @@
-# Simple DVS Emulator
+# DVS Camera Simulator
 
-A simple Dynamic Vision Sensor (DVS) emulator that processes normal video data and generates event-based output similar to a DVS camera.
+A simple Dynamic Vision Sensor (DVS) camera simulator that processes videos to create event-based outputs that mimic how DVS cameras capture motion.
 
 ## Overview
 
 This project simulates the behavior of a DVS camera by:
 
-1. Taking standard video input
+1. Reading a video input
 2. Converting frames to grayscale
-3. Computing pixel differences between consecutive frames
-4. Generating event frames where significant changes occurred
+3. Computing differences between consecutive frames
+4. Visualizing the differences where:
+   - Negative changes become brighter
+   - Positive changes become darker
+   - No change remains neutral gray (128)
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.6+
 - OpenCV
 - NumPy
-- UV (for dependency management)
+- UV (for running the script)
 
 ## Installation
 
-1. Clone this repository
-2. Install dependencies using UV:
+1. Clone this repository:
+
    ```
-   uv pip install -e .
+   git clone https://github.com/sbalk/dvs-camera-simulator.git
+   cd dvs-camera-simulator
+   ```
+
+2. Install UV (Universal Virtualenv):
+   ```
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
 ## Usage
 
-### Preparing Input Data
+### Preparing Input Videos
 
-1. Place your video files in the `input/` directory
+1. Place your video files in the `input/` directory (the directory will be created if it doesn't exist)
 
 ### Running the Simulator
 
-Run the main script to process all videos in the input directory:
+Run the main script with UV:
 
 ```
-python main.py
+uv run main.py
 ```
 
-This will generate DVS output videos in the `output/` directory.
+This will set up an environment when it's ran for the first time and then process all videos in the `input/` directory and save the DVS-simulated outputs to the `output/` directory. It will skip videos that were previously converted.
 
-### Viewing Results
-
-Use the viewer to see original and DVS output side by side:
+### Command Line Options
 
 ```
-python viewer.py
+uv run main.py --help
 ```
 
-Or specify a specific video:
+Available options:
+
+- `--input_dir`: Directory containing input video files (default: input)
+- `--output_dir`: Directory to save output video files (default: output)
+- `--input_video`: Specific input video file to process
+- `--output_video`: Output filename for the processed video
+- `--grey_value`: Base gray value for the DVS output (default: 128)
+- `--no_display`: Disable display of frames during processing
+
+### Examples
+
+Process a specific video:
 
 ```
-python viewer.py --video your_video.mp4
+uv run main.py --input_video input/my_video.mp4 --output_video output/dvs_result.mp4
+```
+
+Process all videos with custom settings:
+
+```
+uv run main.py --grey_value 150 --no_display
 ```
 
 ## How It Works
 
-The DVS simulator detects changes in pixel intensity between consecutive frames. When the absolute difference exceeds a threshold (default: 10), it registers an event at that pixel location.
+The DVS simulator detects changes in pixel intensity between consecutive frames:
 
-The resulting output shows only the pixels that have changed significantly, similar to how a real DVS camera would detect changes in the scene.
+- When a pixel gets darker, it appears darker in the output
+- When a pixel gets brighter, it appears brighter in the output
+- Pixels with no change remain at the neutral gray value
 
-## Customization
-
-You can modify the threshold value in `dvs_simulator.py` to adjust the sensitivity of the DVS emulation.
+This approach mimics how real DVS cameras only register changes in luminance rather than absolute brightness values.
 
 ## File Structure
 
-- `main.py`: Main entry point
-- `dvs_simulator.py`: Core DVS simulation logic
-- `viewer.py`: Tool for viewing original and DVS videos side by side
+- `main.py`: Main entry point with command-line interface
+- `dvs_simulator.py`: Core DVS simulation implementation
 - `input/`: Directory for input videos
-- `output/`: Directory for output DVS videos
+- `output/`: Directory for processed DVS videos
