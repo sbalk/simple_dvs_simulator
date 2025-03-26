@@ -1,0 +1,11 @@
+[project]
+name = "simple-dvs-emulator"
+version = "0.1.0"
+description = "A simple DVS camera simulator using OpenCV"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "opencv-python",
+    "numpy",
+    "uv"
+]
