@@ -21,8 +21,8 @@ from pathlib import Path
 
 # Constants
 GREY_VALUE = 128  # Middle grey (8-bit)
-DEFAULT_INPUT_DIR = Path("inputs")
-DEFAULT_OUTPUT_DIR = Path("outputs")
+DEFAULT_INPUT_DIR = Path("input")
+DEFAULT_OUTPUT_DIR = Path("output")
 
 
 def ensure_directory(directory):
@@ -30,7 +30,7 @@ def ensure_directory(directory):
     os.makedirs(directory, exist_ok=True)
 
 
-def process_video(input_path, output_path, grey_value=GREY_VALUE, display=True):
+def process_video(input_path, output_path, grey_value=GREY_VALUE, display=False):
     """
     Process the video to simulate DVS camera output.
 
@@ -125,7 +125,7 @@ def process_video(input_path, output_path, grey_value=GREY_VALUE, display=True):
     return True
 
 
-def process_all_videos(input_dir, output_dir, grey_value=GREY_VALUE, display=True):
+def process_all_videos(input_dir, output_dir, grey_value=GREY_VALUE, display=False):
     """
     Process all video files in the input directory, except those already converted.
 
@@ -166,7 +166,9 @@ def process_all_videos(input_dir, output_dir, grey_value=GREY_VALUE, display=Tru
         print("All videos have already been processed.")
         return
 
-    print(f"Found {len(videos_to_process)} videos to process out of {len(video_files)} total videos.")
+    print(
+        f"Found {len(videos_to_process)} videos to process out of {len(video_files)} total videos."
+    )
 
     # Process each video
     for video_file in videos_to_process:
